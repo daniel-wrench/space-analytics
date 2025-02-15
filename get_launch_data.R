@@ -28,7 +28,7 @@ ordering <- "ordering=net" # Ordering the results by ascending T-0 (NET)
 query_url <- paste0(launch_base_url, "?", net_filters, "&", 
                     orbital_filter, "&", mode, "&", limit, "&", ordering)
 
-print(paste("query URL:",query_url))
+print(paste("Initial query URL:",query_url))
 
 # Function to get API results
 get_results <- function(url) {
@@ -62,7 +62,7 @@ next_page <- results$`next` # Adds 100 to the offset each time
 
 # Set rate limit parameters
 start_time <- Sys.time()
-max_calls_per_hour <- 5
+max_calls_per_hour <- 15
 calls_made <- 1 # Already made one call with initial query above
 time_per_call <- 3600 / max_calls_per_hour  # 3600 seconds in an hour
 
@@ -78,15 +78,14 @@ while (!is.null(next_page)) {
     calls_made <- 0
   }
   
-  print(next_page)
+  print(paste("Current query URL:",next_page))
   next_results <- get_results(next_page)
   
   if (!is.null(next_results) && "results" %in% names(next_results)) {
     all_results <- bind_rows(all_results, next_results$results)  # Append new data
     next_page <- next_results$`next` #Adds 100 to the offset of the query URL each time
     
-    print("Latest range of dates of all_results:")
-    print(paste(min(all_results$net),max(all_results$net)))
+    print(paste("Current start and end date of dataset:", min(all_results$net), max(all_results$net)))
     
     
     calls_made <- calls_made + 1  # Increment API call count
