@@ -6,7 +6,7 @@ library(httr)
 library(jsonlite)
 library(tidyverse)
 
-# Define the base URL 
+# Define the base URL
 ## Use lldev for testing with 1 year of data with no rate limits
 ## ll for full data but 15 calls/hour
 launch_base_url <- "https://ll.thespacedevs.com/2.3.0/launches/"
@@ -25,10 +25,21 @@ limit <- "limit=100" # Limit returned results to just 100 per query
 ordering <- "ordering=net" # Ordering the results by ascending T-0 (NET)
 
 # Assemble query URL
-query_url <- paste0(launch_base_url, "?", net_filters, "&", 
-                    orbital_filter, "&", mode, "&", limit, "&", ordering)
+query_url <- paste0(
+  launch_base_url,
+  "?",
+  net_filters,
+  "&",
+  orbital_filter,
+  "&",
+  mode,
+  "&",
+  limit,
+  "&",
+  ordering
+)
 
-print(paste("Initial query URL:",query_url))
+print(paste("Initial query URL:", query_url))
 
 # Function to get API results
 get_results <- function(url) {
@@ -38,7 +49,7 @@ get_results <- function(url) {
     message("Request failed: ", e)
     return(NULL)
   })
-
+  
   # Check for valid response
   if (!is.null(response) && status_code(response) == 200) {
     return(fromJSON(content(response, "text", encoding = "UTF-8"), flatten = TRUE))
@@ -67,25 +78,31 @@ calls_made <- 1 # Already made one call with initial query above
 time_per_call <- 3600 / max_calls_per_hour  # 3600 seconds in an hour
 
 while (!is.null(next_page)) {
-
   # Check if rate limit is reached
   if (calls_made >= max_calls_per_hour) {
     elapsed_time <- as.numeric(difftime(Sys.time(), start_time, units = "secs"))
     wait_time <- max(0, 3600 - elapsed_time)  # Calculate remaining time in the hour
-    message("Rate limit reached. Waiting for ", round(wait_time), " seconds...")
+    message("Hourly rate limit reached. Waiting for ",
+            round(wait_time),
+            " seconds...")
     Sys.sleep(wait_time)  # Pause to avoid exceeding the limit
     start_time <- Sys.time()  # Reset start time for the next batch
     calls_made <- 0
   }
   
-  print(paste("Current query URL:",next_page))
+  print(paste("Current query URL:", next_page))
   next_results <- get_results(next_page)
   
-  if (!is.null(next_results) && "results" %in% names(next_results)) {
+  if (!is.null(next_results) &&
+      "results" %in% names(next_results)) {
     all_results <- bind_rows(all_results, next_results$results)  # Append new data
     next_page <- next_results$`next` #Adds 100 to the offset of the query URL each time
     
-    print(paste("Current start and end date of dataset:", min(all_results$net), max(all_results$net)))
+    print(paste(
+      "Current start and end date of dataset:",
+      min(all_results$net),
+      max(all_results$net)
+    ))
     
     
     calls_made <- calls_made + 1  # Increment API call count
@@ -118,9 +135,9 @@ launch_df <- all_results |>
     orbit = mission.orbit.name,
     rocket = rocket.configuration.name,
     launchServiceProvider = launch_service_provider.name,
-    launchServiceProviderType = launch_service_provider.type,
+    launchServiceProviderType = launch_service_provider.type.name,
     launchpad = pad.name,
-    country = pad.location.country_code
+    country = pad.location.country.name
   )
 
 launch_df$date <- as.Date(launch_df$net)

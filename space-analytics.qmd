@@ -1,29 +1,68 @@
 ---
 title: "Space Analytics 2025"
 author: "Daniel Wrench"
-date: "`r Sys.Date()`"
+# date: "`r Sys.Date()`"
 format:
   html:
     toc: true
+execute:
+  echo: false
+  eval: true
+  include: true
+  # fig_width: 6     # Set default width for plots
+  # fig_height: 4    # Set default height for plots
+  # dpi: 300         # Set default DPI for plots
 ---
 
 ## Next steps
 
--   Figure out issue with limited launch data
-    -   Prefer the R code due to apparently nicer variable extraction, but last time I ran it go no results
-    -   Despite requesting 3 years, only seem to be able to get one. Email makers?
--   Convert this to Quarto, figure out how to post link, put on GitHub
+-   Investigate easy re-formatting (shortcut, on save?)
+-   Look at pre-made dicts:
+    -   https://github.com/Nosudrum/launch-stats/blob/main/python/plotsCodes/PlotFunctions.py#L141
+    -   https://github.com/Nosudrum/launch-stats/blob/2c1fbe973bd213596118302b63d5f693e26f5334/python/plots_old.py#L203
+-   Work through plots below:
+    -   All missions: cumulative?
+    -   All missions: Dominance of Starlink. *SpaceX put up x% of all mass to orbit in 2024, more than any other company or even country. Of that, x% were Starlink satellites (they were their own customer).*
+    -   All missions: 3rd place NZ in 2024
+    -   All missions: gave up on the Moon, now a resurgence of robotic
+    -   Human missions: change in destination, rise of private spaceflight
+-   Put on GitHub
     -   <https://quinnasena.github.io/resbaz2022/slides/slide_deck.html#/title-slide>
     -   [Quarto for Scientist](https://qmd4sci.njtierney.com/)
-    -   
--   Send to Jatan, lunar groups: any other information you think would be useful?
--   For second essay on going to space more generally: make/source graph of all satellites launched, coloured by starlink and science (see if OWID or Wikipedia has one first); and one of people launched, by rocket and nation: consequences for orbit usability, astronomy, climate change, and benefits to earth
+-   Tell story
+-   Publish as blog post/s
+-   Send to Jatan, lunar groups: any other information you think would be useful
+
+```{r}
+#| label: libraries
+#| include: false
+
+# Install and load the necessary packages
+library(rvest)
+library(tidyverse)
+library(janitor)
+library(lubridate)
+library(plotly)
+library(knitr)
+```
 
 ## All Launches
 
+Selection of variables of six most recent launches:
+
 ```{r}
-launches <- read_csv("launches.csv")
-head(launches)
+#| label: read_data
+#| include: false
+
+launch_df <- read_csv("launches_cleaned.csv")
+```
+
+```{r}
+launch_df |>
+  select(net, mission, rocket, orbit, launchpad, country) |>
+  dplyr::arrange(desc(net)) |>
+  head() |>
+  kable()
 ```
 
 ```{r}
@@ -38,9 +77,14 @@ plot_launches_by_year <- function(group_var, title, x_label) {
   ggplot(launch_summary, aes(x = year, y = count, fill = {{group_var}})) +
     geom_bar(stat = "identity", position = "stack") +
     scale_x_date(date_labels = "%Y", date_breaks = "1 year") +
-    labs(title = title, x = "Year", y = "Number of Launches", fill = x_label) +
+    labs(
+      title = title,
+      x = "Year",
+      y = "Number of Launches",
+      fill = x_label
+    ) +
     theme_minimal()
-    #theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  #theme(axis.text.x = element_text(angle = 45, hjust = 1))
 }
 ```
 
@@ -64,19 +108,8 @@ For similar visualisations, see:
 -   <https://www.visualcapitalist.com/cp/visualizing-all-attempted-and-successful-moon-landings/>
 -   <https://www.scientificamerican.com/article/50-years-of-moon-missions-graphic/>)
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-
-# Install and load the necessary packages
-library(rvest)
-library(tidyverse)
-library(janitor)
-library(lubridate)
-library(plotly)
-library(knitr)
-```
-
-```{r importing data, echo=FALSE}
+```{r}
+#| label: importing data
 
 # Specify the URL of the Wikipedia page
 url <- "https://en.wikipedia.org/wiki/List_of_missions_to_the_Moon"
@@ -91,12 +124,13 @@ tables <- page %>%
 
 # Define function to clean raw tables
 clean_table <- function(df_raw) {
-  df_raw <- df_raw[,-1] |> clean_names() # Remove index columns and clean column names
+  df_raw <- df_raw[, -1] |> clean_names() # Remove index columns and clean column names
   # Remove any footnotes
-  df_raw <- as.data.frame(lapply(df_raw, function(x) str_remove_all(x, "\\[\\d+\\]")))  
+  df_raw <- as.data.frame(lapply(df_raw, function(x)
+    str_remove_all(x, "\\[\\d+\\]")))
   # Move description rows to new column
-  df <- filter(df_raw, spacecraft!=launch_date)
-  mission_descriptions <- filter(df_raw, spacecraft==launch_date) |> rename(description = spacecraft) |> 
+  df <- filter(df_raw, spacecraft != launch_date)
+  mission_descriptions <- filter(df_raw, spacecraft == launch_date) |> rename(description = spacecraft) |>
     select(1:2)
   df <- merge(df, mission_descriptions)
   
@@ -109,7 +143,8 @@ c21_clean <- clean_table(tables[[2]])
 moon_missions <- rbind(c20_clean, c21_clean)
 ```
 
-```{r cleaning data, echo=FALSE}
+```{r}
+#| label: clean-data
 
 # Format dates
 moon_missions$launch_date <- lubridate::dmy(moon_missions$launch_date)
@@ -171,7 +206,9 @@ moon_missions <- moon_missions %>%
 
 ```
 
-```{r decade table, echo=FALSE}
+```{r}
+#| label: decade-table
+
 decade_table <- moon_missions %>%
   mutate(decade = floor(year(launch_date) / 10) * 10) |> 
   group_by(decade) |> 
@@ -186,7 +223,9 @@ None in the 80s! Matches Wikipedia graph
 
 #### By country and outcome
 
-```{r ggplot, echo=FALSE}
+```{r}
+#| label: ggplot
+
 # Make operator legend in order of frequency
 country_counts <- table(moon_missions$country)
 country_counts <- sort(country_counts, decreasing = TRUE) 
@@ -229,7 +268,7 @@ moon_missions |>
 
 #### Interactive
 
-```{r plotly, echo=FALSE}
+```{r plotly}
 
 p <- moon_missions |> 
   filter(grepl("Lander", mission_type)) |> # Includes lander/launchers like LEM
