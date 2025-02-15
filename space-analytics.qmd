@@ -1,0 +1,283 @@
+---
+title: "Space Analytics 2025"
+author: "Daniel Wrench"
+date: "`r Sys.Date()`"
+format:
+  html:
+    toc: true
+---
+
+## Next steps
+
+-   Figure out issue with limited launch data
+    -   Prefer the R code due to apparently nicer variable extraction, but last time I ran it go no results
+    -   Despite requesting 3 years, only seem to be able to get one. Email makers?
+-   Convert this to Quarto, figure out how to post link, put on GitHub
+    -   <https://quinnasena.github.io/resbaz2022/slides/slide_deck.html#/title-slide>
+    -   [Quarto for Scientist](https://qmd4sci.njtierney.com/)
+    -   
+-   Send to Jatan, lunar groups: any other information you think would be useful?
+-   For second essay on going to space more generally: make/source graph of all satellites launched, coloured by starlink and science (see if OWID or Wikipedia has one first); and one of people launched, by rocket and nation: consequences for orbit usability, astronomy, climate change, and benefits to earth
+
+## All Launches
+
+```{r}
+launches <- read_csv("launches.csv")
+head(launches)
+```
+
+```{r}
+
+plot_launches_by_year <- function(group_var, title, x_label) {
+  # Dynamically group by year and the selected category
+  launch_summary <- launch_df |>
+    group_by(year, {{group_var}}) |> # Converts function argument to column name
+    summarise(count = n(), .groups = "drop")
+  
+  # Create stacked bar chart
+  ggplot(launch_summary, aes(x = year, y = count, fill = {{group_var}})) +
+    geom_bar(stat = "identity", position = "stack") +
+    scale_x_date(date_labels = "%Y", date_breaks = "1 year") +
+    labs(title = title, x = "Year", y = "Number of Launches", fill = x_label) +
+    theme_minimal()
+    #theme(axis.text.x = element_text(angle = 45, hjust = 1))
+}
+```
+
+```{r}
+
+plot_launches_by_year(missionTypeStarlink, "Starlink vs Non-Starlink Launches by Year", "Launch Type")
+plot_launches_by_year(country, "Launches by Country per Year", "Country")
+plot_launches_by_year(launchServiceProvider, "Launches by Provider per Year", "Launch Provider")
+plot_launches_by_year(launchServiceProviderType, "Launches by Provider Type per Year", "Launch Provider")
+```
+
+## Lunar missions
+
+The story of the moon's abandonment, and the arrival of new players. To accompany my essay on returning to the Moon.
+
+Data sourced from Wikipedia: <https://en.wikipedia.org/wiki/List_of_missions_to_the_Moon>
+
+For similar visualisations, see:
+
+-   <https://www.lpi.usra.edu/lunar/missions/>
+-   <https://www.visualcapitalist.com/cp/visualizing-all-attempted-and-successful-moon-landings/>
+-   <https://www.scientificamerican.com/article/50-years-of-moon-missions-graphic/>)
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+# Install and load the necessary packages
+library(rvest)
+library(tidyverse)
+library(janitor)
+library(lubridate)
+library(plotly)
+library(knitr)
+```
+
+```{r importing data, echo=FALSE}
+
+# Specify the URL of the Wikipedia page
+url <- "https://en.wikipedia.org/wiki/List_of_missions_to_the_Moon"
+
+# Read the page
+page <- read_html(url)
+
+# Extract the first table with the class 'wikitable'
+tables <- page %>%
+  html_nodes("table.wikitable") %>%
+  html_table(fill = TRUE)
+
+# Define function to clean raw tables
+clean_table <- function(df_raw) {
+  df_raw <- df_raw[,-1] |> clean_names() # Remove index columns and clean column names
+  # Remove any footnotes
+  df_raw <- as.data.frame(lapply(df_raw, function(x) str_remove_all(x, "\\[\\d+\\]")))  
+  # Move description rows to new column
+  df <- filter(df_raw, spacecraft!=launch_date)
+  mission_descriptions <- filter(df_raw, spacecraft==launch_date) |> rename(description = spacecraft) |> 
+    select(1:2)
+  df <- merge(df, mission_descriptions)
+  
+  return(df)
+}
+
+c20_clean <- clean_table(tables[[1]])
+c21_clean <- clean_table(tables[[2]])
+
+moon_missions <- rbind(c20_clean, c21_clean)
+```
+
+```{r cleaning data, echo=FALSE}
+
+# Format dates
+moon_missions$launch_date <- lubridate::dmy(moon_missions$launch_date)
+moon_missions$year <- lubridate::year(moon_missions$launch_date)
+
+# Fixing description
+moon_missions$description[moon_missions$spacecraft=="Ranger 5 lander"] <- "Solar panels erroneously disengaged from power system, failed 9 hours after launch when batteries were depleted. Missed the Moon as course correction was not completed."
+
+# Get country names
+agency_countries <- list(
+  "NASA" = "USA",
+  "CNSA" = "China",
+  "JAXA" = "Japan",
+  "ESA" = "Europe",
+  "ISRO" = "India",
+  "Lavochkin" = "USSR/Russia",
+  "OKB-1" = "USSR/Russia",
+  "Roscosmos" = "USSR/Russia"
+)
+
+# Replace using gsub with fixed = TRUE to match exact strings
+moon_missions <- moon_missions |> 
+  mutate(country = case_when(
+    operator == "NASA" ~ "USA",
+    operator == "CNSA" ~ "China",
+    operator == "JAXA" ~ "Japan",
+    operator == "ESA" ~ "Europe",
+    operator == "ISRO" ~ "India",
+    operator == "Lavochkin" ~ "USSR/Russia",
+    operator == "OKB-1" ~ "USSR/Russia",
+    operator == "Roscosmos" ~ "USSR/Russia",
+    TRUE ~ operator))
+
+
+# Creating concise "spacecraft (mission)" name
+
+moon_missions <- moon_missions |> 
+  rowwise() |> 
+  mutate(mission_new = ifelse(
+    grepl(spacecraft, mission),
+    paste0("<b>",spacecraft,"</b>"),
+    paste0("<b>",spacecraft,"</b>", " (", mission, ")")
+  ))
+
+# Simplifying statuses
+
+moon_missions <- moon_missions %>%
+  mutate(
+    outcome_simple = case_when(
+      outcome %in% c("Operational", "Success", "En route") ~ "Success",
+      .default = "Failure"
+    )
+  )
+
+# Putting line breaks in description
+moon_missions <- moon_missions %>%
+  mutate(description = str_wrap(description, width = 50)) %>%
+  mutate(description = str_replace_all(description, "\n", "<br>"))
+
+```
+
+```{r decade table, echo=FALSE}
+decade_table <- moon_missions %>%
+  mutate(decade = floor(year(launch_date) / 10) * 10) |> 
+  group_by(decade) |> 
+  summarise(missions = n_distinct(mission))
+
+kable(decade_table, col.names = c("Decade", "Lunar missions"))
+```
+
+None in the 80s! Matches Wikipedia graph
+
+### Landings
+
+#### By country and outcome
+
+```{r ggplot, echo=FALSE}
+# Make operator legend in order of frequency
+country_counts <- table(moon_missions$country)
+country_counts <- sort(country_counts, decreasing = TRUE) 
+moon_missions$country <- factor(moon_missions$country, levels = names(country_counts))
+
+
+moon_missions |> 
+  filter(grepl("Lander", mission_type)) |> # Includes lander/launchers like LEM
+  group_by(year) |> 
+  arrange(desc(outcome_simple)) |> 
+  mutate(y = row_number()) |> 
+  ggplot(aes(x=year, y = y, text=paste0(
+    mission_new,  
+    "<br>Operator: ",operator,
+    "<br>Launch date: ",launch_date, 
+    "<br>Outcome: ", outcome,
+    "<br><br>", description
+  )
+    )) +
+  geom_point(aes(shape=outcome_simple, color=country), size=2) + # factors: alpha, colour, fill, shape, size 
+  scale_shape_manual(values = c("Success" = 16, "Failure" = 4)) + # Circle for Success, Cross for Failure
+  scale_color_manual(values=c('#377eb8','#e41a1c',"gold", '#4daf4a','#984ea3','#ff7f00','darkblue','#a65628','#f781bf','#999999')) +
+  labs(colour="Country/Company", shape="Outcome") +
+  ggtitle("All lunar landing attempts") +
+  ylim(c(0,15)) + 
+  theme_minimal() +
+  theme(
+    legend.position = "inside",
+    legend.position.inside = c(.55, .55),
+    legend.box.background = element_rect(color="black", linewidth=1),
+    axis.title.y = element_blank(),    # Remove y-axis title
+    axis.title.x = element_blank(),
+    axis.text.y = element_blank(),     # Remove y-axis labels
+    axis.ticks.y = element_blank(),    # Remove y-axis ticks
+    axis.line.y = element_blank(),
+    panel.grid.major.y = element_blank(),  # Remove y-axis major grid lines
+    panel.grid.minor.y = element_blank()   # Remove y-axis minor grid lines
+  )
+```
+
+#### Interactive
+
+```{r plotly, echo=FALSE}
+
+p <- moon_missions |> 
+  filter(grepl("Lander", mission_type)) |> # Includes lander/launchers like LEM
+  group_by(year) |> 
+  arrange(desc(outcome_simple)) |> 
+  mutate(y = row_number()) |> 
+  ggplot(aes(x=year, y = y, text=paste0(
+    mission_new,  
+    "<br>Operator: ",operator,
+    "<br>Launch date: ",launch_date, 
+    "<br>Outcome: ", outcome,
+    "<br><br>", description
+  )
+    )) +
+  geom_point(aes(shape=outcome_simple)) + # factors: alpha, colour, fill, shape, size 
+  scale_shape_manual(values = c("Success" = 16, "Failure" = 4)) + # Circle for Success, Cross for Failure
+  ggtitle("All lunar landing attempts (hover over points for details)") +
+  ylim(c(0,15)) + 
+  theme_minimal() +
+  theme(
+    axis.title.y = element_blank(),    # Remove y-axis title
+    axis.title.x = element_blank(),
+    axis.text.y = element_blank(),     # Remove y-axis labels
+    axis.ticks.y = element_blank(),    # Remove y-axis ticks
+    axis.line.y = element_blank(),
+    panel.grid.major.y = element_blank(),  # Remove y-axis major grid lines
+    panel.grid.minor.y = element_blank()   # Remove y-axis minor grid lines
+  )  +
+  guides(color = guide_legend(title = NULL))  # Remove legend title
+
+ggplotly(p, tooltip="text")  %>%
+  layout(
+    legend = list(
+      title = "",  # Set legend title to an empty string to remove it
+      bgcolor="lightgrey",
+      x = 0.05,
+      y=0.95
+    )
+  )
+
+```
+
+#### Locations
+
+From Wikipedia: <https://en.wikipedia.org/wiki/File:Moon_landing_sites.svg>
+
+Click to visit Wikipedia page for that mission
+
+(Note: does not include most recent missions)
+
+<img src="https://upload.wikimedia.org/wikipedia/commons/3/34/Moon_landing_sites.svg" alt="Markdown Logo"/>
