@@ -1,3 +1,7 @@
+# This script downloads data for all orbital rocket launches from the Space Devs
+# Launch Library API. It then performs some tidying of the column names, adds
+# a couple of derived variables, and saves both this and the raw data to CSVs.
+
 library(httr)
 library(jsonlite)
 library(tidyverse)
@@ -5,14 +9,14 @@ library(tidyverse)
 # Define the base URL 
 ## Use lldev for testing with 1 year of data with no rate limits
 ## ll for full data but 15 calls/hour
-launch_base_url <- "https://lldev.thespacedevs.com/2.2.0/launch/"
+launch_base_url <- "https://ll.thespacedevs.com/2.3.0/launches/"
 
 # Get current time and time from 3 years ago
 enddate <- format(Sys.time(), "%Y-%m-%dT%H:%M:%S")
-startdate <- format(Sys.time() - 365 * 3 * 86400, "%Y-%m-%dT%H:%M:%S")
+#startdate <- format(Sys.time() - 365 * 3 * 86400, "%Y-%m-%dT%H:%M:%S")
 
 # Define filters
-net_filters <- paste0("net__gte=", startdate, "&net__lte=", enddate)
+net_filters <- paste0("&net__lte=", enddate)
 orbital_filter <- "include_suborbital=false"
 
 # Other query parameters
@@ -52,14 +56,15 @@ if (is.null(results) || !"results" %in% names(results)) {
   stop("No data retrieved from API.")
 }
 
-# Set rate limit parameters
-max_calls_per_hour <- 15
-calls_made <- 0
-time_per_call <- 3600 / max_calls_per_hour  # 3600 seconds in an hour
-
 # Handle pagination
 all_results <- results$results
-next_page <- results$`next`
+next_page <- results$`next` # Adds 100 to the offset each time
+
+# Set rate limit parameters
+start_time <- Sys.time()
+max_calls_per_hour <- 5
+calls_made <- 1 # Already made one call with initial query above
+time_per_call <- 3600 / max_calls_per_hour  # 3600 seconds in an hour
 
 while (!is.null(next_page)) {
 
@@ -73,12 +78,16 @@ while (!is.null(next_page)) {
     calls_made <- 0
   }
   
-  
+  print(next_page)
   next_results <- get_results(next_page)
   
   if (!is.null(next_results) && "results" %in% names(next_results)) {
     all_results <- bind_rows(all_results, next_results$results)  # Append new data
-    next_page <- next_results$`next`
+    next_page <- next_results$`next` #Adds 100 to the offset of the query URL each time
+    
+    print("Latest range of dates of all_results:")
+    print(paste(min(all_results$net),max(all_results$net)))
+    
     
     calls_made <- calls_made + 1  # Increment API call count
     message("Calls made:", calls_made)
@@ -90,9 +99,9 @@ while (!is.null(next_page)) {
     
   } else {
     next_page <- NULL
+    print("All data retrieved from API")
   }
 }
-print("All data retreived from API")
 
 write_csv(all_results, "launches_raw.csv")
 
