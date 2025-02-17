@@ -9,9 +9,9 @@ execute:
   echo: false
   eval: true
   include: true
-  # fig_width: 6     # Set default width for plots
-  # fig_height: 4    # Set default height for plots
-  # dpi: 300         # Set default DPI for plots
+  fig_width: 10     # Set default width for plots
+  fig_height: 6    # Set default height for plots
+  dpi: 300         # Set default DPI for plots
 ---
 
 ## Next steps
@@ -32,6 +32,7 @@ execute:
 -   Tell story
 -   Publish as blog post/s
 -   Send to Jatan, lunar groups: any other information you think would be useful
+-   Look into OWID data (see emails from Charlie)
 
 ```{r}
 #| label: libraries
@@ -44,6 +45,7 @@ library(janitor)
 library(lubridate)
 library(plotly)
 library(knitr)
+library(plotly)
 ```
 
 ## All Launches
@@ -76,25 +78,85 @@ plot_launches_by_year <- function(group_var, title, x_label) {
   # Create stacked bar chart
   ggplot(launch_summary, aes(x = year, y = count, fill = {{group_var}})) +
     geom_bar(stat = "identity", position = "stack") +
-    scale_x_date(date_labels = "%Y", date_breaks = "1 year") +
+    scale_x_date(date_labels = "%Y", date_breaks = "5 year") +
     labs(
       title = title,
       x = "Year",
       y = "Number of Launches",
       fill = x_label
     ) +
-    theme_minimal()
-  #theme(axis.text.x = element_text(angle = 45, hjust = 1))
+    theme_minimal() + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 }
+```
+
+```{r}
+#| label: grouping vars
+
+launch_df <- launch_df |> 
+  mutate(country_grped = ifelse(country %in% names(sort(table(country), decreasing = TRUE))[1:9], 
+                          country, 
+                          "Other")) |> 
+  mutate(country_grped = recode(country_grped,
+                                "Kazakhstan" = "USSR/Russia",
+                                "Russia" = "USSR/Russia"))
+
+```
+
+```{r}
+head(launch_df)
+```
+
+```{r}
+launch_df |> 
+  filter(year=="2024-01-01") |> 
+  count(country, sort = TRUE)
+```
+
+```{r}
+plot_launches_by_year(country_grped, "Launches by Country per Year", "Country") |> ggplotly()
+
+```
+
+Can make above interactive with `|> ggplotly()`, but doesn't allow for nice de-stacking of bars. Using raw plotly code below:
+
+```{r}
+launch_summary_country <- launch_df |>
+  group_by(year, country_grped) |> # Converts function argument to column name
+  summarise(count = n(), .groups = "drop") |> 
+  mutate(year=year(year))
+  
+
+# Create the plotly stacked bar chart
+p <- plot_ly(launch_summary_country, x = ~year, y = ~count, color = ~country_grped, type = 'bar' 
+             #text = ~paste(year(year), ": ", count, "launches"), hoverinfo = 'text'
+             ) %>%
+  layout(
+    barmode = 'stack',           # Stack the bars
+    #yaxis = list(range = c(0, NA)),  # Ensure y-axis starts at 0
+    title = "All Orbital Launch Attempts, by Country", 
+    xaxis = list(title = "Year"), 
+    yaxis = list(title = "Count of launch attempts")
+  )
+
+# Show the interactive plot
+p
 ```
 
 ```{r}
 
 plot_launches_by_year(missionTypeStarlink, "Starlink vs Non-Starlink Launches by Year", "Launch Type")
-plot_launches_by_year(country, "Launches by Country per Year", "Country")
 plot_launches_by_year(launchServiceProvider, "Launches by Provider per Year", "Launch Provider")
 plot_launches_by_year(launchServiceProviderType, "Launches by Provider Type per Year", "Launch Provider")
 ```
+
+Three eras:
+
+1.  Cold War Era, kicked off with rapid increase during Space Race
+2.  International Era
+3.  Commercial Era
+
+In this last era, we are putting more stuff into space than ever before. Most of that growth is from one company, and most of that company's growth is one group of satellites.
 
 ## Lunar missions
 
