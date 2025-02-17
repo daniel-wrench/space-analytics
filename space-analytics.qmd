@@ -14,18 +14,71 @@ execute:
   dpi: 300         # Set default DPI for plots
 ---
 
-## Next steps
+## SPCE101 Lecture plan
+
+*Work through notes below*
+
+*Start compiling slides, putting placeholders for blank sections*
+
+February 25th, 2pm
+
+Title: **A Brief History of Spaceflight: From the Cold War to Commercial Space**
+
+-   [*Plots to inspire discussion, comments*]{.underline}
+
+    -   Launches by country
+
+    -   Launches by commercial/government
+
+-   **Space has changed a lot since the Space Race: has become international and commercial.**
+
+    -   Talk about 3 eras of space exploration, highlighting SpaceX, NZ:
+
+        -   **Cold War Era,** kicked off with rapid increase during Space Race
+
+        -   **International Era:** more countries involved, some commercial. ISS. Rise of China. NZ is in the game: big industrial powerhouses of Japan and India: we are now launching just as much, if not more often than them. Even beat Russia last year. We are actually commercial. Brings us to...
+
+        -   **Commercial Era:**
+
+            -   SpaceX doing things much more cheaply, increasing demand.
+            -   (Much of that demand is from themselves! Dominance of Starlink. *SpaceX put up x% of all mass to orbit in 2024, more than any other company or even country. Of that, x% were Starlink satellites (they were their own customer).)*
+
+-   *What might be some good and bad consequences?*
+
+    -   **Sending more stuff than ever before:** science missions, communications satellites, space tourists, and even people to the Moon for the first time in 50 years
+
+    -   **Brings great opportunities**: more exploration and scientific discovery, more inspiration, more connectivity. Humans on Mars actually less than 20 years away for the first time in history.
+
+    -   **But also big concerns:** Resource management, conflict avoidance (breakdown of "international world order" - more competition. Good and bad), biological reality of keeping humans alive in space long-term.
+
+-   Title slide? **(ASF conclusion slide, minus title?)**
+
+-   How did we get here? Why did the US stop going to the Moon? Or perhaps better worded - why did they go in the first place? *Use ASOI slides, go through history, expand on above points.*
+
+    -   **Cold War Era:** Story of Space Race and Apollo (ASOIASF slides 5-8, 33)
+
+    -   **International Era:** (transition from mentioning other space stations). Rise of China: , operating the one other current space station, milestones on the Moon. Not planning to stop there! Spurs US into action. Big expensive rocket that we need to send somewhere after shuttle (slides 21-34, not all crucial) - but no lander?? We'll come back to this
+
+    -   **Commercial Era:** big investment and vision required: space-mad billionaires. Embrace of failure = innovation = cost reduction
+
+        -   Tourism: VG and BO
+
+        -   Satellite delivery: Rocket Lab, Kea, Dawn; SpaceX
+
+            -   Big plans, need to fund: satellites, ISS cargo, crew after shuttle, Starlink (slide 15?)
+
+            -   Starship... meant for Mars, useful for Moon
+
+    -   **Back to the Moon and on to Mars?** Motivating Artemis. *After multiple failed attempts, now the “stars have aligned”: resources on the Moon, an affordable lander to compensate for a mightly unaffordable, but politically valuable, rocket, a competitor, an exciting long-term goal.*
+
+    -   **Settle down, space cowboys**. Issues to solve: space weather, law, biology, diplomacy. (**ASF slides 7-8)**
+
+## Others steps for code (but focus on lecture for now)
 
 -   Investigate easy re-formatting (shortcut, on save?)
 -   Look at pre-made dicts:
     -   https://github.com/Nosudrum/launch-stats/blob/main/python/plotsCodes/PlotFunctions.py#L141
     -   https://github.com/Nosudrum/launch-stats/blob/2c1fbe973bd213596118302b63d5f693e26f5334/python/plots_old.py#L203
--   Work through plots below:
-    -   All missions: cumulative?
-    -   All missions: Dominance of Starlink. *SpaceX put up x% of all mass to orbit in 2024, more than any other company or even country. Of that, x% were Starlink satellites (they were their own customer).*
-    -   All missions: 3rd place NZ in 2024
-    -   All missions: gave up on the Moon, now a resurgence of robotic
-    -   Human missions: change in destination, rise of private spaceflight
 -   Put on GitHub
     -   <https://quinnasena.github.io/resbaz2022/slides/slide_deck.html#/title-slide>
     -   [Quarto for Scientist](https://qmd4sci.njtierney.com/)
@@ -118,13 +171,13 @@ plot_launches_by_year(country_grped, "Launches by Country per Year", "Country") 
 
 ```
 
-Can make above interactive with `|> ggplotly()`, but doesn't allow for nice de-stacking of bars. Using raw plotly code below:
+Can make above interactive with `|> ggplotly()`, but doesn't allow for nice de-stacking of bars. However, it is easily convertable to a function, which does not seem to be the case with the raw plotly code below:
 
 ```{r}
 launch_summary_country <- launch_df |>
   group_by(year, country_grped) |> # Converts function argument to column name
-  summarise(count = n(), .groups = "drop") |> 
-  mutate(year=year(year))
+  summarise(count = n(), .groups = "drop")
+  #mutate(year=year(year))
   
 
 # Create the plotly stacked bar chart
@@ -149,14 +202,6 @@ plot_launches_by_year(missionTypeStarlink, "Starlink vs Non-Starlink Launches by
 plot_launches_by_year(launchServiceProvider, "Launches by Provider per Year", "Launch Provider")
 plot_launches_by_year(launchServiceProviderType, "Launches by Provider Type per Year", "Launch Provider")
 ```
-
-Three eras:
-
-1.  Cold War Era, kicked off with rapid increase during Space Race
-2.  International Era
-3.  Commercial Era
-
-In this last era, we are putting more stuff into space than ever before. Most of that growth is from one company, and most of that company's growth is one group of satellites.
 
 ## Lunar missions
 
