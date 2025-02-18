@@ -14,11 +14,47 @@ execute:
   dpi: 300         # Set default DPI for plots
 ---
 
+## To-do
+
+*Do exploration in an R script. Save this doc for final versions.*
+
+-   Prep lecture
+
+    -   Make our two plots
+
+        -   Export static all countries
+
+        -   Remove "multinational", export
+
+    -   Put slides together, referring to lecture plan below
+
+        -   Re-arrange ASOI as indicated, add placeholders for to-do slides
+
+-   Put on GitHub
+
+    -   <https://quinnasena.github.io/resbaz2022/slides/slide_deck.html#/title-slide>
+    -   [Quarto for Scientist](https://qmd4sci.njtierney.com/)
+
+-   Move lunar data processing to separate script
+
+-   Try to reproduce lunar plots with
+
+-   Investigate easy re-formatting (shortcut, on save?)
+
+-   Look at pre-made dicts:
+
+    -   https://github.com/Nosudrum/launch-stats/blob/main/python/plotsCodes/PlotFunctions.py#L141
+    -   https://github.com/Nosudrum/launch-stats/blob/2c1fbe973bd213596118302b63d5f693e26f5334/python/plots_old.py#L203
+
+-   Tell story
+
+-   Publish as blog post/s
+
+-   Send to Jatan, lunar groups: any other information you think would be useful
+
+-   Look into OWID data (see emails from Charlie)
+
 ## SPCE101 Lecture plan
-
-*Work through notes below*
-
-*Start compiling slides, putting placeholders for blank sections*
 
 February 25th, 2pm
 
@@ -73,20 +109,6 @@ Title: **A Brief History of Spaceflight: From the Cold War to Commercial Space**
 
     -   **Settle down, space cowboys**. Issues to solve: space weather, law, biology, diplomacy. (**ASF slides 7-8)**
 
-## Others steps for code (but focus on lecture for now)
-
--   Investigate easy re-formatting (shortcut, on save?)
--   Look at pre-made dicts:
-    -   https://github.com/Nosudrum/launch-stats/blob/main/python/plotsCodes/PlotFunctions.py#L141
-    -   https://github.com/Nosudrum/launch-stats/blob/2c1fbe973bd213596118302b63d5f693e26f5334/python/plots_old.py#L203
--   Put on GitHub
-    -   <https://quinnasena.github.io/resbaz2022/slides/slide_deck.html#/title-slide>
-    -   [Quarto for Scientist](https://qmd4sci.njtierney.com/)
--   Tell story
--   Publish as blog post/s
--   Send to Jatan, lunar groups: any other information you think would be useful
--   Look into OWID data (see emails from Charlie)
-
 ```{r}
 #| label: libraries
 #| include: false
@@ -110,6 +132,9 @@ Selection of variables of six most recent launches:
 #| include: false
 
 launch_df <- read_csv("launches_cleaned.csv")
+# Limiting to full years
+launch_df <- launch_df |> 
+  filter(year!="2025-01-01")
 ```
 
 ```{r}
@@ -352,7 +377,7 @@ moon_missions |>
     "<br><br>", description
   )
     )) +
-  geom_point(aes(shape=outcome_simple, color=country), size=2) + # factors: alpha, colour, fill, shape, size 
+  geom_point(aes(shape=outcome_simple, color=country), size=2.5) + # factors: alpha, colour, fill, shape, size 
   scale_shape_manual(values = c("Success" = 16, "Failure" = 4)) + # Circle for Success, Cross for Failure
   scale_color_manual(values=c('#377eb8','#e41a1c',"gold", '#4daf4a','#984ea3','#ff7f00','darkblue','#a65628','#f781bf','#999999')) +
   labs(colour="Country/Company", shape="Outcome") +
@@ -360,6 +385,7 @@ moon_missions |>
   ylim(c(0,15)) + 
   theme_minimal() +
   theme(
+    #panel.background = element_rect(fill="darkgrey", colour="darkgrey"),
     legend.position = "inside",
     legend.position.inside = c(.55, .55),
     legend.box.background = element_rect(color="black", linewidth=1),
@@ -374,6 +400,8 @@ moon_missions |>
 ```
 
 #### Interactive
+
+Can't colour and have useful legend at the same time here:
 
 ```{r plotly}
 
@@ -396,6 +424,7 @@ p <- moon_missions |>
   ylim(c(0,15)) + 
   theme_minimal() +
   theme(
+    #legend.position="none",
     axis.title.y = element_blank(),    # Remove y-axis title
     axis.title.x = element_blank(),
     axis.text.y = element_blank(),     # Remove y-axis labels
