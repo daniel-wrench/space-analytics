@@ -4,11 +4,10 @@
 .Ruserdata
 
 /.quarto/
-renv/
-renv.lock
 README_files/
 README.html
 space-analytics.html
 space-analytics_files/
+space-analytics_cache/
 
 data/launches_raw.csv

@@ -1,16 +1,18 @@
 ---
 title: "Space Analytics 2025"
 author: "Daniel Wrench"
-# date: "`r Sys.Date()`"
+date: today
+bibliography: refs.bib
 format:
   html:
     toc: true
+    fig_width: 8     # Set default width for plots
+    fig_height: 6   # Set default height for plots
 execute:
   echo: false
   eval: true
+  cache: true
   include: true
-  fig_width: 800     # Set default width for plots
-  fig_height: 600   # Set default height for plots
   dpi: 300         # Set default DPI for plots
 ---
 
@@ -300,4 +302,13 @@ p
 
 And things get even crazier if you consider that the vast majority of these launches only carry 1 satellite: the fairing of the SpaceX Falcon 9 rocket carries between 20 and 60 in one go. Suddenly you can see how one company put 7000 satellites in orbit in only 4 years.
 
-![](images/starlink_fairing.jpg){fig-align="left" width="50%"}
+![60 Starlink satellites inside fairing of a Falcon 9 rocket. Source Elon Musk/Twitter](images/starlink_fairing.jpg){fig-align="left" width="50%"}
+
+:::{.panel-tabset}
+# Tab 1 
+Hello World!
+
+# Tab 2
+What's Up?
+:::
+
