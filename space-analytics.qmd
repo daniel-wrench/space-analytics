@@ -9,8 +9,8 @@ execute:
   echo: false
   eval: true
   include: true
-  fig_width: 10     # Set default width for plots
-  fig_height: 6    # Set default height for plots
+  fig_width: 800     # Set default width for plots
+  fig_height: 600   # Set default height for plots
   dpi: 300         # Set default DPI for plots
 ---
 
@@ -52,7 +52,7 @@ execute:
 
 -   Send to Jatan, lunar groups: any other information you think would be useful
 
--   Look into OWID data (see emails from Charlie)
+-   Look into OWID data (see emails from Charlie): <https://ourworldindata.org/space-exploration-satellites>
 
 ## SPCE101 Lecture plan
 
@@ -60,11 +60,11 @@ February 25th, 2pm
 
 Title: **A Brief History of Spaceflight: From the Cold War to Commercial Space**
 
--   [*Plots to inspire discussion, comments*]{.underline}
+-   Open with Starlink orbital map. *SpaceX put up x% of all mass/satellites to orbit in 2024, more than any other company or even country. Of that, x% were Starlink satellites (they were their own customer).*
 
-    -   Launches by country
+-   Follow up with commercial/government/starlink chart, then world chart (interactive). Ask for comments on trends.
 
-    -   Launches by commercial/government
+-   Taking you on a journey through the history of these two graphs. The politics and engineering behind these trends, and where we're headed, and what we need to watch out for.
 
 -   **Space has changed a lot since the Space Race: has become international and commercial.**
 
@@ -77,13 +77,13 @@ Title: **A Brief History of Spaceflight: From the Cold War to Commercial Space**
         -   **Commercial Era:**
 
             -   SpaceX doing things much more cheaply, increasing demand.
-            -   (Much of that demand is from themselves! Dominance of Starlink. *SpaceX put up x% of all mass to orbit in 2024, more than any other company or even country. Of that, x% were Starlink satellites (they were their own customer).)*
+            -   (Much of that demand is from themselves! Dominance of Starlink. *)*
 
 -   *What might be some good and bad consequences?*
 
     -   **Sending more stuff than ever before:** science missions, communications satellites, space tourists, and even people to the Moon for the first time in 50 years
 
-    -   **Brings great opportunities**: more exploration and scientific discovery, more inspiration, more connectivity. Humans on Mars actually less than 20 years away for the first time in history.
+    -   **Brings great opportunities**: more exploration and scientific discovery, more inspiration, more connectivity. More of the world can send stuff to space. Magnet being built in Lower Hutt is being sent to ISS on a SpaceX rocket. Humans on Mars actually less than 20 years away for the first time in history.
 
     -   **But also big concerns:** Resource management, conflict avoidance (breakdown of "international world order" - more competition. Good and bad), biological reality of keeping humans alive in space long-term.
 
@@ -109,6 +109,8 @@ Title: **A Brief History of Spaceflight: From the Cold War to Commercial Space**
 
     -   **Settle down, space cowboys**. Issues to solve: space weather, law, biology, diplomacy. (**ASF slides 7-8)**
 
+    -   **Just for a bit of personal opinion to finish off: I think space is really cool, as I'm sure you all do, why you're in this course. I'm very jealous that space science wasn't an option when I was doing undergrad. And despite all the negative stuff I've mentioned, I still really want to see people on the Moon again as well as new telescopes to unravel the mysteries of the universe and satellites that improve our lives. What I hope is that with you all, you can retain the fascination and excitement with space, while also being responsible stewards of it: making sure we explore responsibly, take our time to make sure we understand the space environment and have a legal framework so that we can all make use of it together. Thank you!**
+
 ```{r}
 #| label: libraries
 #| include: false
@@ -121,6 +123,7 @@ library(lubridate)
 library(plotly)
 library(knitr)
 library(plotly)
+library(webshot)
 ```
 
 ## All Launches
@@ -131,7 +134,7 @@ Selection of variables of six most recent launches:
 #| label: read_data
 #| include: false
 
-launch_df <- read_csv("launches_cleaned.csv")
+launch_df <- read_csv("data/launches_cleaned.csv")
 # Limiting to full years
 launch_df <- launch_df |> 
   filter(year!="2025-01-01")
@@ -177,12 +180,11 @@ launch_df <- launch_df |>
                           "Other")) |> 
   mutate(country_grped = recode(country_grped,
                                 "Kazakhstan" = "USSR/Russia",
-                                "Russia" = "USSR/Russia"))
+                                "Russia" = "USSR/Russia",
+                                "Unknown" = "Other",
+                                "United States of America" = "USA"))
 
-```
-
-```{r}
-head(launch_df)
+sort(table(launch_df$country_grped), decreasing = TRUE)
 ```
 
 ```{r}
@@ -191,30 +193,48 @@ launch_df |>
   count(country, sort = TRUE)
 ```
 
+Can make static ggplots interactive with `|> ggplotly()`, but doesn't allow for nice de-stacking of bars. However, it is easily convertable to a function, which does not seem to be the case with the raw plotly code below:
+
 ```{r}
-plot_launches_by_year(country_grped, "Launches by Country per Year", "Country") |> ggplotly()
+# Get the right legend ordering
 
+country_order <- launch_df %>%
+  count(country_grped, sort = TRUE) %>%  # Count occurrences and sort descending
+  pull(country_grped)
+
+launch_df$country_grped <- factor(launch_df$country_grped, levels = rev(country_order))
 ```
-
-Can make above interactive with `|> ggplotly()`, but doesn't allow for nice de-stacking of bars. However, it is easily convertable to a function, which does not seem to be the case with the raw plotly code below:
 
 ```{r}
 launch_summary_country <- launch_df |>
   group_by(year, country_grped) |> # Converts function argument to column name
-  summarise(count = n(), .groups = "drop")
-  #mutate(year=year(year))
+  summarise(count = n(), .groups = "drop")  |> 
+  mutate(year=year(year))
   
+# Define color mapping
+country_colors <- c('#1b9e77','#d95f02','#7570b3','#e7298a','#66a61e','#a6761d','#e6ab02','#666666')
 
+```
+
+```{r}
 # Create the plotly stacked bar chart
-p <- plot_ly(launch_summary_country, x = ~year, y = ~count, color = ~country_grped, type = 'bar' 
+p <- plot_ly(launch_summary_country, x = ~year, y = ~count, color = ~country_grped, colors = country_colors,  type = 'bar'
+             #width = 600, height = 400
              #text = ~paste(year(year), ": ", count, "launches"), hoverinfo = 'text'
              ) %>%
   layout(
     barmode = 'stack',           # Stack the bars
     #yaxis = list(range = c(0, NA)),  # Ensure y-axis starts at 0
-    title = "All Orbital Launch Attempts, by Country", 
+    title = "All Orbital Rocket Launches 1957-2024, by Country of Launch Site", 
     xaxis = list(title = "Year"), 
-    yaxis = list(title = "Count of launch attempts")
+    #font = list(size = 18),
+    yaxis = list(title = "Count of launch attempts"),
+    legend = list(
+    x = 0.65,  # Move legend horizontally (0 = left, 1 = right)
+    y = 0.9,   # Move legend vertically (0 = bottom, 1 = top),
+    bordercolor="black",
+    borderwidth=1
+  )
   )
 
 # Show the interactive plot
@@ -222,237 +242,62 @@ p
 ```
 
 ```{r}
-
-plot_launches_by_year(missionTypeStarlink, "Starlink vs Non-Starlink Launches by Year", "Launch Type")
-plot_launches_by_year(launchServiceProvider, "Launches by Provider per Year", "Launch Provider")
-plot_launches_by_year(launchServiceProviderType, "Launches by Provider Type per Year", "Launch Provider")
-```
-
-## Lunar missions
-
-The story of the moon's abandonment, and the arrival of new players. To accompany my essay on returning to the Moon.
-
-Data sourced from Wikipedia: <https://en.wikipedia.org/wiki/List_of_missions_to_the_Moon>
-
-For similar visualisations, see:
-
--   <https://www.lpi.usra.edu/lunar/missions/>
--   <https://www.visualcapitalist.com/cp/visualizing-all-attempted-and-successful-moon-landings/>
--   <https://www.scientificamerican.com/article/50-years-of-moon-missions-graphic/>)
-
-```{r}
-#| label: importing data
-
-# Specify the URL of the Wikipedia page
-url <- "https://en.wikipedia.org/wiki/List_of_missions_to_the_Moon"
-
-# Read the page
-page <- read_html(url)
-
-# Extract the first table with the class 'wikitable'
-tables <- page %>%
-  html_nodes("table.wikitable") %>%
-  html_table(fill = TRUE)
-
-# Define function to clean raw tables
-clean_table <- function(df_raw) {
-  df_raw <- df_raw[, -1] |> clean_names() # Remove index columns and clean column names
-  # Remove any footnotes
-  df_raw <- as.data.frame(lapply(df_raw, function(x)
-    str_remove_all(x, "\\[\\d+\\]")))
-  # Move description rows to new column
-  df <- filter(df_raw, spacecraft != launch_date)
-  mission_descriptions <- filter(df_raw, spacecraft == launch_date) |> rename(description = spacecraft) |>
-    select(1:2)
-  df <- merge(df, mission_descriptions)
-  
-  return(df)
-}
-
-c20_clean <- clean_table(tables[[1]])
-c21_clean <- clean_table(tables[[2]])
-
-moon_missions <- rbind(c20_clean, c21_clean)
+# Filter out human launches
+launch_df |> 
+  count(missionType)
 ```
 
 ```{r}
-#| label: clean-data
+launch_df |> 
+  count(launchServiceProvider, sort=TRUE)
+```
 
-# Format dates
-moon_missions$launch_date <- lubridate::dmy(moon_missions$launch_date)
-moon_missions$year <- lubridate::year(moon_missions$launch_date)
+### Commercial status
 
-# Fixing description
-moon_missions$description[moon_missions$spacecraft=="Ranger 5 lander"] <- "Solar panels erroneously disengaged from power system, failed 9 hours after launch when batteries were depleted. Missed the Moon as course correction was not completed."
+```{r}
+satellites_by_prov <- launch_df |>
+  filter(missionType!="Human Exploration" | is.na(missionType)) |> 
+  mutate(launchServiceProviderType = ifelse(missionTypeStarlink=="Starlink", "SpaceX Starlink",
+                                            ifelse(launchServiceProvider=="SpaceX", "Other SpaceX",
+                                                          ifelse(launchServiceProviderType=="Commercial", "Other Commercial", launchServiceProviderType)))) |>   
+  group_by(year, launchServiceProviderType) |> # Converts function argument to column name
+  summarise(count = n(), .groups = "drop")  |> 
+  mutate(year=year(year)) |> 
+  filter(launchServiceProviderType!="Multinational")
 
-# Get country names
-agency_countries <- list(
-  "NASA" = "USA",
-  "CNSA" = "China",
-  "JAXA" = "Japan",
-  "ESA" = "Europe",
-  "ISRO" = "India",
-  "Lavochkin" = "USSR/Russia",
-  "OKB-1" = "USSR/Russia",
-  "Roscosmos" = "USSR/Russia"
-)
-
-# Replace using gsub with fixed = TRUE to match exact strings
-moon_missions <- moon_missions |> 
-  mutate(country = case_when(
-    operator == "NASA" ~ "USA",
-    operator == "CNSA" ~ "China",
-    operator == "JAXA" ~ "Japan",
-    operator == "ESA" ~ "Europe",
-    operator == "ISRO" ~ "India",
-    operator == "Lavochkin" ~ "USSR/Russia",
-    operator == "OKB-1" ~ "USSR/Russia",
-    operator == "Roscosmos" ~ "USSR/Russia",
-    TRUE ~ operator))
-
-
-# Creating concise "spacecraft (mission)" name
-
-moon_missions <- moon_missions |> 
-  rowwise() |> 
-  mutate(mission_new = ifelse(
-    grepl(spacecraft, mission),
-    paste0("<b>",spacecraft,"</b>"),
-    paste0("<b>",spacecraft,"</b>", " (", mission, ")")
-  ))
-
-# Simplifying statuses
-
-moon_missions <- moon_missions %>%
-  mutate(
-    outcome_simple = case_when(
-      outcome %in% c("Operational", "Success", "En route") ~ "Success",
-      .default = "Failure"
-    )
-  )
-
-# Putting line breaks in description
-moon_missions <- moon_missions %>%
-  mutate(description = str_wrap(description, width = 50)) %>%
-  mutate(description = str_replace_all(description, "\n", "<br>"))
+# Define color mapping
+#country_colors <- c('#1b9e77','#d95f02','#7570b3','#e7298a','#66a61e','#a6761d','#e6ab02','#666666')
 
 ```
 
 ```{r}
-#| label: decade-table
 
-decade_table <- moon_missions %>%
-  mutate(decade = floor(year(launch_date) / 10) * 10) |> 
-  group_by(decade) |> 
-  summarise(missions = n_distinct(mission))
+leg_colors <- c('grey','#fee08b','#fc8d59','#d73027')
 
-kable(decade_table, col.names = c("Decade", "Lunar missions"))
-```
-
-None in the 80s! Matches Wikipedia graph
-
-### Landings
-
-#### By country and outcome
-
-```{r}
-#| label: ggplot
-
-# Make operator legend in order of frequency
-country_counts <- table(moon_missions$country)
-country_counts <- sort(country_counts, decreasing = TRUE) 
-moon_missions$country <- factor(moon_missions$country, levels = names(country_counts))
-
-
-moon_missions |> 
-  filter(grepl("Lander", mission_type)) |> # Includes lander/launchers like LEM
-  group_by(year) |> 
-  arrange(desc(outcome_simple)) |> 
-  mutate(y = row_number()) |> 
-  ggplot(aes(x=year, y = y, text=paste0(
-    mission_new,  
-    "<br>Operator: ",operator,
-    "<br>Launch date: ",launch_date, 
-    "<br>Outcome: ", outcome,
-    "<br><br>", description
-  )
-    )) +
-  geom_point(aes(shape=outcome_simple, color=country), size=2.5) + # factors: alpha, colour, fill, shape, size 
-  scale_shape_manual(values = c("Success" = 16, "Failure" = 4)) + # Circle for Success, Cross for Failure
-  scale_color_manual(values=c('#377eb8','#e41a1c',"gold", '#4daf4a','#984ea3','#ff7f00','darkblue','#a65628','#f781bf','#999999')) +
-  labs(colour="Country/Company", shape="Outcome") +
-  ggtitle("All lunar landing attempts") +
-  ylim(c(0,15)) + 
-  theme_minimal() +
-  theme(
-    #panel.background = element_rect(fill="darkgrey", colour="darkgrey"),
-    legend.position = "inside",
-    legend.position.inside = c(.55, .55),
-    legend.box.background = element_rect(color="black", linewidth=1),
-    axis.title.y = element_blank(),    # Remove y-axis title
-    axis.title.x = element_blank(),
-    axis.text.y = element_blank(),     # Remove y-axis labels
-    axis.ticks.y = element_blank(),    # Remove y-axis ticks
-    axis.line.y = element_blank(),
-    panel.grid.major.y = element_blank(),  # Remove y-axis major grid lines
-    panel.grid.minor.y = element_blank()   # Remove y-axis minor grid lines
-  )
-```
-
-#### Interactive
-
-Can't colour and have useful legend at the same time here:
-
-```{r plotly}
-
-p <- moon_missions |> 
-  filter(grepl("Lander", mission_type)) |> # Includes lander/launchers like LEM
-  group_by(year) |> 
-  arrange(desc(outcome_simple)) |> 
-  mutate(y = row_number()) |> 
-  ggplot(aes(x=year, y = y, text=paste0(
-    mission_new,  
-    "<br>Operator: ",operator,
-    "<br>Launch date: ",launch_date, 
-    "<br>Outcome: ", outcome,
-    "<br><br>", description
-  )
-    )) +
-  geom_point(aes(shape=outcome_simple)) + # factors: alpha, colour, fill, shape, size 
-  scale_shape_manual(values = c("Success" = 16, "Failure" = 4)) + # Circle for Success, Cross for Failure
-  ggtitle("All lunar landing attempts (hover over points for details)") +
-  ylim(c(0,15)) + 
-  theme_minimal() +
-  theme(
-    #legend.position="none",
-    axis.title.y = element_blank(),    # Remove y-axis title
-    axis.title.x = element_blank(),
-    axis.text.y = element_blank(),     # Remove y-axis labels
-    axis.ticks.y = element_blank(),    # Remove y-axis ticks
-    axis.line.y = element_blank(),
-    panel.grid.major.y = element_blank(),  # Remove y-axis major grid lines
-    panel.grid.minor.y = element_blank()   # Remove y-axis minor grid lines
-  )  +
-  guides(color = guide_legend(title = NULL))  # Remove legend title
-
-ggplotly(p, tooltip="text")  %>%
+# Create the plotly stacked bar chart
+p <- plot_ly(satellites_by_prov, x = ~year, y = ~count, color = ~launchServiceProviderType, type = 'bar', colors = leg_colors
+             #width = 600, height = 400
+             #text = ~paste(year(year), ": ", count, "launches"), hoverinfo = 'text'
+             ) %>%
   layout(
+    barmode = 'stack',           # Stack the bars
+    #yaxis = list(range = c(0, NA)),  # Ensure y-axis starts at 0
+    title = "All Satellite Launches 1957-2024, by Launch Provider Type", 
+    xaxis = list(title = "Year"), 
+    #font = list(size = 18),
+    yaxis = list(title = "Count of launch attempts"),
     legend = list(
-      title = "",  # Set legend title to an empty string to remove it
-      bgcolor="lightgrey",
-      x = 0.05,
-      y=0.95
-    )
+    x = 0.65,  # Move legend horizontally (0 = left, 1 = right)
+    y = 0.9,   # Move legend vertically (0 = bottom, 1 = top),
+    bordercolor="black",
+    borderwidth=1
+  )
   )
 
+# Show the interactive plot
+p
 ```
 
-#### Locations
+And things get even crazier if you consider that the vast majority of these launches only carry 1 satellite: the fairing of the SpaceX Falcon 9 rocket carries between 20 and 60 in one go. Suddenly you can see how one company put 7000 satellites in orbit in only 4 years.
 
-From Wikipedia: <https://en.wikipedia.org/wiki/File:Moon_landing_sites.svg>
-
-Click to visit Wikipedia page for that mission
-
-(Note: does not include most recent missions)
-
-<img src="https://upload.wikimedia.org/wikipedia/commons/3/34/Moon_landing_sites.svg" alt="Markdown Logo"/>
+![](images/starlink_fairing.jpg){fig-align="left" width="50%"}
