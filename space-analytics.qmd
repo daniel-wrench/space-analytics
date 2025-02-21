@@ -20,41 +20,40 @@ execute:
 
 *Do exploration in an R script. Save this doc for final versions.*
 
--   Prep lecture
+Quarto references:
 
-    -   Make our two plots
+-   [Quarto slides](https://quinnasena.github.io/resbaz2022/slides/slide_deck.html#/title-slide)
 
-        -   Export static all countries
+-   [Quarto guide](https://qmd4sci.njtierney.com/)
 
-        -   Remove "multinational", export
+-   [ ] Finish lecture slides
 
-    -   Put slides together, referring to lecture plan below
+-   [ ] Convert powerpoint to PDF and commit that instead
 
-        -   Re-arrange ASOI as indicated, add placeholders for to-do slides
+-   [ ] Put lecture story into this file
 
--   Put on GitHub
+    -   Tell specific story with certain plots, but also have big plot that people can interact with, probably just the standard plotly stacked bar but being able to select what the grouping variable is. Refer people to /include select plots of McDowell for object-level data perhaps
 
-    -   <https://quinnasena.github.io/resbaz2022/slides/slide_deck.html#/title-slide>
-    -   [Quarto for Scientist](https://qmd4sci.njtierney.com/)
+-   [x] Move lunar data processing to separate script
 
--   Move lunar data processing to separate script
+-   [ ] Try to reproduce lunar plots in this code
 
--   Try to reproduce lunar plots with
-
--   Investigate easy re-formatting (shortcut, on save?)
+-   [ ] Investigate easy re-formatting (shortcut, on save?)
 
 -   Look at pre-made dicts:
 
     -   https://github.com/Nosudrum/launch-stats/blob/main/python/plotsCodes/PlotFunctions.py#L141
     -   https://github.com/Nosudrum/launch-stats/blob/2c1fbe973bd213596118302b63d5f693e26f5334/python/plots_old.py#L203
 
--   Tell story
+-   [ ] Reference/cite the following data sources, as well as launch library of course:
 
--   Publish as blog post/s
+    -   OWID data (see emails from Charlie): <https://ourworldindata.org/space-exploration-satellites>
 
--   Send to Jatan, lunar groups: any other information you think would be useful
+    -   Jonathan McDowell: https://planet4589.org/space/stats/index.htmlPublish as blog post/s
 
--   Look into OWID data (see emails from Charlie): <https://ourworldindata.org/space-exploration-satellites>
+-   [ ] Publish as a blog
+
+-   [ ] Send to Jatan, lunar groups, Casey: any other information you think would be useful?
 
 ## SPCE101 Lecture plan
 
@@ -218,43 +217,7 @@ country_colors <- c('#1b9e77','#d95f02','#7570b3','#e7298a','#66a61e','#a6761d',
 
 ```
 
-```{r}
-# Create the plotly stacked bar chart
-p <- plot_ly(launch_summary_country, x = ~year, y = ~count, color = ~country_grped, colors = country_colors,  type = 'bar'
-             #width = 600, height = 400
-             #text = ~paste(year(year), ": ", count, "launches"), hoverinfo = 'text'
-             ) %>%
-  layout(
-    barmode = 'stack',           # Stack the bars
-    #yaxis = list(range = c(0, NA)),  # Ensure y-axis starts at 0
-    title = "All Orbital Rocket Launches 1957-2024, by Country of Launch Site", 
-    xaxis = list(title = "Year"), 
-    #font = list(size = 18),
-    yaxis = list(title = "Count of launch attempts"),
-    legend = list(
-    x = 0.65,  # Move legend horizontally (0 = left, 1 = right)
-    y = 0.9,   # Move legend vertically (0 = bottom, 1 = top),
-    bordercolor="black",
-    borderwidth=1
-  )
-  )
-
-# Show the interactive plot
-p
-```
-
-```{r}
-# Filter out human launches
-launch_df |> 
-  count(missionType)
-```
-
-```{r}
-launch_df |> 
-  count(launchServiceProvider, sort=TRUE)
-```
-
-### Commercial status
+### Launches by provider type
 
 ```{r}
 satellites_by_prov <- launch_df |>
@@ -300,15 +263,35 @@ p <- plot_ly(satellites_by_prov, x = ~year, y = ~count, color = ~launchServicePr
 p
 ```
 
-And things get even crazier if you consider that the vast majority of these launches only carry 1 satellite: the fairing of the SpaceX Falcon 9 rocket carries between 20 and 60 in one go. Suddenly you can see how one company put 7000 satellites in orbit in only 4 years.
+And things get even crazier if you consider that the vast majority of these launches only carry 1 satellite: the fairing of the SpaceX Falcon 9 rocket carries between 20 and 60 in one go. Suddenly you can see how one company put 8000 satellites in orbit in only 4 years.
 
-![60 Starlink satellites inside fairing of a Falcon 9 rocket. Source Elon Musk/Twitter](images/starlink_fairing.jpg){fig-align="left" width="50%"}
+STATS - 8,000 satellites launches over 5 years - At least 12,000 total planned - *x* more scheduled to go up this week - Others planned: Amazon, Chinese
 
-:::{.panel-tabset}
-# Tab 1 
-Hello World!
+![60 Starlink satellites inside fairing of a Falcon 9 rocket. You can see how one company put 7000 satellites up in only 4 years! Source Elon Musk/Twitter](images/starlink_fairing.jpg){fig-align="left" width="50%"}
 
-# Tab 2
-What's Up?
-:::
+### Launches by country
 
+```{r}
+# Create the plotly stacked bar chart
+p <- plot_ly(launch_summary_country, x = ~year, y = ~count, color = ~country_grped, colors = country_colors,  type = 'bar'
+             #width = 600, height = 400
+             #text = ~paste(year(year), ": ", count, "launches"), hoverinfo = 'text'
+             ) %>%
+  layout(
+    barmode = 'stack',           # Stack the bars
+    #yaxis = list(range = c(0, NA)),  # Ensure y-axis starts at 0
+    title = "All Orbital Rocket Launches 1957-2024, by Country of Launch Site", 
+    xaxis = list(title = "Year"), 
+    #font = list(size = 18),
+    yaxis = list(title = "Count of launch attempts"),
+    legend = list(
+    x = 0.65,  # Move legend horizontally (0 = left, 1 = right)
+    y = 0.9,   # Move legend vertically (0 = bottom, 1 = top),
+    bordercolor="black",
+    borderwidth=1
+  )
+  )
+
+# Show the interactive plot
+p
+```
