@@ -5,7 +5,7 @@ date: today
 bibliography: refs.bib
 format:
   html:
-    toc: true
+    toc: false
     fig_width: 8     # Set default width for plots
     fig_height: 6   # Set default height for plots
 execute:
@@ -26,11 +26,19 @@ Quarto references:
 
 -   [Quarto guide](https://qmd4sci.njtierney.com/)
 
--   [ ] Finish lecture slides
+-   [x] Finish lecture slides
+
+-   [ ] Put link + 3 figs here, with bulleted Starlinks stats
+
+-   [ ] Backup of those (non-interactive) at start of slides
+
+-   [ ] Cf. slides to notes, adding presenter notes as need be
+
+-   [ ] Practise *without* looking at notes
 
 -   [ ] Convert powerpoint to PDF and commit that instead
 
--   [ ] Put lecture story into this file
+-   [ ] Put lecture story into this document
 
     -   Tell specific story with certain plots, but also have big plot that people can interact with, probably just the standard plotly stacked bar but being able to select what the grouping variable is. Refer people to /include select plots of McDowell for object-level data perhaps
 
@@ -125,11 +133,10 @@ library(plotly)
 library(knitr)
 library(plotly)
 library(webshot)
+library(DT)
 ```
 
 ## All Launches
-
-Selection of variables of six most recent launches:
 
 ```{r}
 #| label: read_data
@@ -141,12 +148,20 @@ launch_df <- launch_df |>
   filter(year!="2025-01-01")
 ```
 
+NB: a lot of "commercial" launch providers are really the big aerospace contractors of that country that are largely funded by their governments, not truly private in the way that SpaceX, Rocket Lab, and Firefly are.
+
+```{r}
+provider_data <- launch_df |> 
+  group_by(country, launchServiceProviderType, launchServiceProvider) |> 
+  count() |> 
+  arrange(country, desc(n))
+```
+
 ```{r}
 launch_df |>
   select(net, mission, rocket, orbit, launchpad, country) |>
   dplyr::arrange(desc(net)) |>
-  head() |>
-  kable()
+  DT::datatable()
 ```
 
 ```{r}
@@ -184,14 +199,6 @@ launch_df <- launch_df |>
                                 "Russia" = "USSR/Russia",
                                 "Unknown" = "Other",
                                 "United States of America" = "USA"))
-
-sort(table(launch_df$country_grped), decreasing = TRUE)
-```
-
-```{r}
-launch_df |> 
-  filter(year=="2024-01-01") |> 
-  count(country, sort = TRUE)
 ```
 
 Can make static ggplots interactive with `|> ggplotly()`, but doesn't allow for nice de-stacking of bars. However, it is easily convertable to a function, which does not seem to be the case with the raw plotly code below:
@@ -217,8 +224,6 @@ country_colors <- c('#1b9e77','#d95f02','#7570b3','#e7298a','#66a61e','#a6761d',
 
 ```
 
-### Launches by provider type
-
 ```{r}
 satellites_by_prov <- launch_df |>
   filter(missionType!="Human Exploration" | is.na(missionType)) |> 
@@ -234,6 +239,10 @@ satellites_by_prov <- launch_df |>
 #country_colors <- c('#1b9e77','#d95f02','#7570b3','#e7298a','#66a61e','#a6761d','#e6ab02','#666666')
 
 ```
+
+## SPCE101 Lecture
+
+[Satellite Map](https://satellitemap.space/)
 
 ```{r}
 
@@ -263,13 +272,23 @@ p <- plot_ly(satellites_by_prov, x = ~year, y = ~count, color = ~launchServicePr
 p
 ```
 
-And things get even crazier if you consider that the vast majority of these launches only carry 1 satellite: the fairing of the SpaceX Falcon 9 rocket carries between 20 and 60 in one go. Suddenly you can see how one company put 8000 satellites in orbit in only 4 years.
+STATS
 
-STATS - 8,000 satellites launches over 5 years - At least 12,000 total planned - *x* more scheduled to go up this week - Others planned: Amazon, Chinese
+-   7,000 active satellites in LEO = 60% of all active LEO satellites (11,000)
 
-![60 Starlink satellites inside fairing of a Falcon 9 rocket. You can see how one company put 7000 satellites up in only 4 years! Source Elon Musk/Twitter](images/starlink_fairing.jpg){fig-align="left" width="50%"}
+-   At least 12,000 planned
 
-### Launches by country
+-   20-60 per launch
+
+-   First launch May 2019
+
+-   300 collision avoidance maneuvers per day
+
+-   **Half of the world's launches last year were of a SpaceX Falcon 9 (134/261)**
+
+![60 Starlink satellites inside fairing of a Falcon 9 rocket. You can see how one company put 7000 satellites up in only 4 years! Source Elon Musk/Twitter](images/starlink_fairing.jpg){fig-align="left" width="269"}
+
+[![Total number of active satellites over time. From Jonathan's Space Pages](plots/active_sats.jpg)](https://planet4589.org/space/stats/active.html)
 
 ```{r}
 # Create the plotly stacked bar chart
