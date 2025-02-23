@@ -69,56 +69,13 @@ February 25th, 2pm
 
 Title: **A Brief History of Spaceflight: From the Cold War to Commercial Space**
 
--   Open with Starlink orbital map. *SpaceX put up x% of all mass/satellites to orbit in 2024, more than any other company or even country. Of that, x% were Starlink satellites (they were their own customer).*
 
--   Follow up with commercial/government/starlink chart, then world chart (interactive). Ask for comments on trends.
+-   **Sending more stuff than ever before:** science missions, communications satellites, space tourists, and even people to the Moon for the first time in 50 years
 
--   Taking you on a journey through the history of these two graphs. The politics and engineering behind these trends, and where we're headed, and what we need to watch out for.
+-   **Brings great opportunities**: more exploration and scientific discovery, more inspiration, more connectivity. More of the world can send stuff to space. Magnet being built in Lower Hutt is being sent to ISS on a SpaceX rocket. Humans on Mars actually less than 20 years away for the first time in history.
 
--   **Space has changed a lot since the Space Race: has become international and commercial.**
+-   **But also big concerns:** Resource management, conflict avoidance (breakdown of "international world order" - more competition. Good and bad), biological reality of keeping humans alive in space long-term.
 
-    -   Talk about 3 eras of space exploration, highlighting SpaceX, NZ:
-
-        -   **Cold War Era,** kicked off with rapid increase during Space Race
-
-        -   **International Era:** more countries involved, some commercial. ISS. Rise of China. NZ is in the game: big industrial powerhouses of Japan and India: we are now launching just as much, if not more often than them. Even beat Russia last year. We are actually commercial. Brings us to...
-
-        -   **Commercial Era:**
-
-            -   SpaceX doing things much more cheaply, increasing demand.
-            -   (Much of that demand is from themselves! Dominance of Starlink. *)*
-
--   *What might be some good and bad consequences?*
-
-    -   **Sending more stuff than ever before:** science missions, communications satellites, space tourists, and even people to the Moon for the first time in 50 years
-
-    -   **Brings great opportunities**: more exploration and scientific discovery, more inspiration, more connectivity. More of the world can send stuff to space. Magnet being built in Lower Hutt is being sent to ISS on a SpaceX rocket. Humans on Mars actually less than 20 years away for the first time in history.
-
-    -   **But also big concerns:** Resource management, conflict avoidance (breakdown of "international world order" - more competition. Good and bad), biological reality of keeping humans alive in space long-term.
-
--   Title slide? **(ASF conclusion slide, minus title?)**
-
--   How did we get here? Why did the US stop going to the Moon? Or perhaps better worded - why did they go in the first place? *Use ASOI slides, go through history, expand on above points.*
-
-    -   **Cold War Era:** Story of Space Race and Apollo (ASOIASF slides 5-8, 33)
-
-    -   **International Era:** (transition from mentioning other space stations). Rise of China: , operating the one other current space station, milestones on the Moon. Not planning to stop there! Spurs US into action. Big expensive rocket that we need to send somewhere after shuttle (slides 21-34, not all crucial) - but no lander?? We'll come back to this
-
-    -   **Commercial Era:** big investment and vision required: space-mad billionaires. Embrace of failure = innovation = cost reduction
-
-        -   Tourism: VG and BO
-
-        -   Satellite delivery: Rocket Lab, Kea, Dawn; SpaceX
-
-            -   Big plans, need to fund: satellites, ISS cargo, crew after shuttle, Starlink (slide 15?)
-
-            -   Starship... meant for Mars, useful for Moon
-
-    -   **Back to the Moon and on to Mars?** Motivating Artemis. *After multiple failed attempts, now the “stars have aligned”: resources on the Moon, an affordable lander to compensate for a mightly unaffordable, but politically valuable, rocket, a competitor, an exciting long-term goal.*
-
-    -   **Settle down, space cowboys**. Issues to solve: space weather, law, biology, diplomacy. (**ASF slides 7-8)**
-
-    -   **Just for a bit of personal opinion to finish off: I think space is really cool, as I'm sure you all do, why you're in this course. I'm very jealous that space science wasn't an option when I was doing undergrad. And despite all the negative stuff I've mentioned, I still really want to see people on the Moon again as well as new telescopes to unravel the mysteries of the universe and satellites that improve our lives. What I hope is that with you all, you can retain the fascination and excitement with space, while also being responsible stewards of it: making sure we explore responsibly, take our time to make sure we understand the space environment and have a legal framework so that we can all make use of it together. Thank you!**
 
 ```{r}
 #| label: libraries
