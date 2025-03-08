@@ -26,25 +26,15 @@ Quarto references:
 
 -   [Quarto guide](https://qmd4sci.njtierney.com/)
 
--   [x] Finish lecture slides
-
--   [ ] Put link + 3 figs here, with bulleted Starlinks stats
-
--   [ ] Backup of those (non-interactive) at start of slides
-
--   [ ] Cf. slides to notes, adding presenter notes as need be
-
--   [ ] Practise *without* looking at notes
-
--   [ ] Convert powerpoint to PDF and commit that instead
-
--   [ ] Put lecture story into this document
+-   [x] Put lecture story into this document
 
     -   Tell specific story with certain plots, but also have big plot that people can interact with, probably just the standard plotly stacked bar but being able to select what the grouping variable is. Refer people to /include select plots of McDowell for object-level data perhaps
 
 -   [x] Move lunar data processing to separate script
 
 -   [ ] Try to reproduce lunar plots in this code
+
+-   [ ] Analysis of Artemis signatories: population, GDP, formal space program?
 
 -   [ ] Investigate easy re-formatting (shortcut, on save?)
 
@@ -69,13 +59,11 @@ February 25th, 2pm
 
 Title: **A Brief History of Spaceflight: From the Cold War to Commercial Space**
 
-
 -   **Sending more stuff than ever before:** science missions, communications satellites, space tourists, and even people to the Moon for the first time in 50 years
 
 -   **Brings great opportunities**: more exploration and scientific discovery, more inspiration, more connectivity. More of the world can send stuff to space. Magnet being built in Lower Hutt is being sent to ISS on a SpaceX rocket. Humans on Mars actually less than 20 years away for the first time in history.
 
 -   **But also big concerns:** Resource management, conflict avoidance (breakdown of "international world order" - more competition. Good and bad), biological reality of keeping humans alive in space long-term.
-
 
 ```{r}
 #| label: libraries
