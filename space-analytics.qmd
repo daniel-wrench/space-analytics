@@ -93,7 +93,7 @@ launch_df <- launch_df |>
   filter(year!="2025-01-01")
 ```
 
-NB: a lot of "commercial" launch providers are really the big aerospace contractors of that country that are largely funded by their governments, not truly private in the way that SpaceX, Rocket Lab, and Firefly are.
+NB: a lot of "commercial" launch providers are really the big aerospace contractors of that country that are largely funded by their governments: not truly private in the way that SpaceX, Rocket Lab, and Firefly are.
 
 ```{r}
 provider_data <- launch_df |> 
@@ -140,7 +140,7 @@ launch_df <- launch_df |>
                           country, 
                           "Other")) |> 
   mutate(country_grped = recode(country_grped,
-                                "Kazakhstan" = "USSR/Russia",
+                                #"Kazakhstan" = "USSR/Russia",
                                 "Russia" = "USSR/Russia",
                                 "Unknown" = "Other",
                                 "United States of America" = "USA"))
@@ -259,3 +259,63 @@ p <- plot_ly(launch_summary_country, x = ~year, y = ~count, color = ~country_grp
 # Show the interactive plot
 p
 ```
+
+```{r}
+launch_summary_country$country_grped <- factor(launch_summary_country$country_grped, levels = c("Japan", "India", "USSR/Russia", "New Zealand"))
+```
+
+```{r}
+g <- launch_summary_country |> 
+  filter(year >= 2017) |> 
+  # Rename "USSR/Russia" to "Russia"
+  mutate(country_grped = recode(country_grped, "USSR/Russia" = "Russia")) |>
+  filter(country_grped %in% c("New Zealand", "Japan","India", "Russia")) |> 
+  ggplot(aes(x = year, y = count, fill = country_grped)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  # labs(
+  #   title = "Orbital Launches by Country of Launch Site",
+  # ) +
+  theme_bw() +
+  theme(
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    plot.title = element_text(hjust = 0.5, size = 10),
+    axis.text.x = element_text(size=7),
+    legend.text = element_text(size = 7),
+    legend.title = element_blank(),
+    legend.key.size = unit(0.25, "cm"),  # Shrink legend icons
+    legend.position = c(0.2, 0.82),  # Position inside plot: x=left, y=top
+    legend.box.margin = margin(0, 0, -5, 0),  # Reduce space below legend
+    panel.grid.major.x = element_blank(),  # Remove vertical major gridlines
+    panel.grid.minor.x = element_blank()   # Remove vertical minor gridlines
+    #plot.margin = margin(10, 10, 10, 10)  # Add consistent margins
+  ) +
+  scale_x_continuous(breaks = 2017:2024) +  # Force all years to show
+  scale_fill_manual(values = c(
+    "New Zealand" = "#039119", 
+    "Japan" = "#ff9595", 
+    "India" = "#ffd295", 
+    "Russia" = "#a395ff"
+  )) 
+  #guides(fill = guide_legend(nrow = 4))  # Force legend to single row
+
+# Save with adjusted dimensions for better text scaling
+ggsave("plots/launches_by_country.png", g, width = 3.2, height = 2, dpi = 300)
+```
+
+```{r}
+lunar_robotic <- launch_df |> filter(missionType=="Lunar Exploration")
+
+ggplot(lunar_robotic) + geom_histogram(aes(x=year))
+
+```
+
+```{r}
+lunar_all <- launch_df |> filter(orbit=="Lunar Orbit")
+
+ggplot(lunar_all) + geom_histogram(aes(x=year))
+```
+
+Minor differences between these two. Latter includes human missions, for example. *Would be cool to do outer(?) join to see what is in one and not the other*.
+
+Either way, probably don't have clean way of getting all lunar landers like we do for the Wikipedia scraping in the lunar script.

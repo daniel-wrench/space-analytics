@@ -55,7 +55,6 @@ clean_table <- function(df_raw) {
   mission_descriptions <- filter(df_raw, spacecraft == launch_date) |> rename(description = spacecraft) |>
     select(1:2)
   df <- merge(df, mission_descriptions)
-  
   return(df)
 }
 
